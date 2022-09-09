@@ -7,7 +7,7 @@ function hann_win = hannWindow(L,percentage)
 if nargin ==0
     error('you need to provide at least the number of window samples L')
 elseif nargin ==1
-    percentage = '100%';
+    percentage = '100% Hann';
 elseif nargin > 2
     error('too many input arguments')
 end

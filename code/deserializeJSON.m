@@ -32,4 +32,12 @@ catch
     end
 end
 
+% now check the size of the table
+dataShape = size(data);
+[~, idxMax] = max(dataShape);
+
+if idxMax == 1
+   data = data'; 
+end
+
 end
