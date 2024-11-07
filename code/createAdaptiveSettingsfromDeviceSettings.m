@@ -18,6 +18,7 @@ end
 %%
 DetectorSettings = table;
 AdaptiveStimSettings = table;
+fftIntervalTable = table;
 %%
 addEntry = 0;
 adaptiveFields = {'adaptiveMode','currentState',...
@@ -26,6 +27,7 @@ tempStateTable = table();
 allStates = {'state0','state1','state2','state3','state4','state5',...
     'state6','state7','state8'};
 rate = NaN;
+boolIntervalUpdated = false;
 
 for iRecord = 1:length(DeviceSettings)
     currentSettings = DeviceSettings{iRecord};
@@ -69,10 +71,25 @@ for iRecord = 1:length(DeviceSettings)
             isfield(currentSettings.SensingConfig,'fftConfig') &&...
             isfield(currentSettings.SensingConfig.fftConfig,'interval')
         FFTinterval = currentSettings.SensingConfig.fftConfig.interval;
+        
+        % check if interval was updated
+        if iRecord ~= 1
+            if fftIntervalTable.HostUnixTime(end) <= HostUnixTime & ...
+                    fftIntervalTable.FFTinterval ~= FFTinterval
+                boolIntervalUpdated = true;
+            else
+                boolIntervalUpdated = false;
+            end
+        end
+
+        % now try to add to interval table
+        newEntryFFT.HostUnixTime = HostUnixTime;
+        newEntryFFT.FFTinterval = FFTinterval;
+        [fftIntervalTable] = addRowToTable(newEntryFFT, fftIntervalTable);
     end
-    
+
     % If flagged, add entry to table
-    if addEntry == 1
+    if addEntry == 1 | boolIntervalUpdated
         % Write convert values (human-readable) of information in updatedLd0 and
         % updatedLd1 to table; maintain Medtronic values in updatedLd0 and
         % updatedLd1 variables for checking against subsequent records
@@ -85,6 +102,12 @@ for iRecord = 1:length(DeviceSettings)
         [DetectorSettings] = addRowToTable(newEntry,DetectorSettings);
         addEntry = 0;
         clear newEntry
+
+        % set interval updated flag back to false to prevent it getting
+        % updated every iteration
+        if boolIntervalUpdated
+            boolIntervalUpdated = false;
+        end
     end
     
     % If applicable, udpate AdaptiveSettings
